@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'json'
 require './getaround_service'
 
@@ -6,4 +8,4 @@ service = GetaroundService.new(data)
 
 service.compute
 
-puts service.serialize
+puts service.serialize.to_json

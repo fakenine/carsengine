@@ -1,4 +1,11 @@
+# frozen_string_literal: true
+
+require './validators'
+
+# Cars that users can rent
 class Car
+  include Validators
+
   attr_reader :id, :price_per_day, :price_per_km
 
   def initialize(id:, price_per_day:, price_per_km:)
@@ -12,8 +19,8 @@ class Car
   private
 
   def validate!
-    raise ArgumentError.new, 'id must be an Integer' unless @id.is_a?(Integer)
-    raise ArgumentError.new, 'price_per_day must be an Integer' unless @price_per_day.is_a?(Integer)
-    raise ArgumentError.new, 'price_per_km must be an Integer' unless @price_per_km.is_a?(Integer)
+    positive_integer!(:id, @id)
+    positive_integer!(:price_per_day, @price_per_day)
+    positive_integer!(:price_per_km, @price_per_km)
   end
 end

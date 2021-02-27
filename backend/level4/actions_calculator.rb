@@ -1,5 +1,8 @@
+# frozen_string_literal: true
+
 require './action'
 
+# Service used to calculate the actions on a rental
 class ActionsCalculator
   attr_reader :price, :commission
   attr_accessor :actions
@@ -10,10 +13,6 @@ class ActionsCalculator
     @actions = []
 
     compute
-  end
-
-  def serialize
-    @actions.values.map(&:serialize)
   end
 
   private
