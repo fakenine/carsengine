@@ -1,5 +1,8 @@
+# frozen_string_literal: true
+
 require './action'
 
+# Service used to calculate the actions on a rental
 class ActionsCalculator
   attr_reader :price, :commission, :duration, :rental_options
   attr_accessor :actions
@@ -32,24 +35,24 @@ class ActionsCalculator
 
   def compute_options
     @options.each do |option|
-      send("compute_#{option.type}_option")
+      send("compute_#{option.type}_option", option, @duration)
     end
   end
 
-  def compute_gps_option
-    option_price = 500 * duration
+  def compute_gps_option(option, duration)
+    option_price = option.price(duration)
     @actions[:driver].amount += option_price
     @actions[:owner].amount += option_price
   end
 
-  def compute_baby_seat_option
-    option_price = 200 * duration
+  def compute_baby_seat_option(option, duration)
+    option_price = option.price(duration)
     @actions[:driver].amount += option_price
     @actions[:owner].amount += option_price
   end
 
-  def compute_additional_insurance_option
-    option_price = 1000 * duration
+  def compute_additional_insurance_option(option, duration)
+    option_price = option.price(duration)
     @actions[:driver].amount += option_price
     @actions[:drivy].amount += option_price
   end

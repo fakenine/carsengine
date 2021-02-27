@@ -1,70 +1,66 @@
+# frozen_string_literal: true
+
 require './car'
 require './rental'
 require './numeric'
 
+# Getaround service used to compute rentals for users
 class GetaroundService
   attr_reader :cars, :rentals
-  attr_accessor :results
 
   def initialize(data)
-    @cars = data['cars'].map do |car|
-      Car.new(id: car['id'], price_per_day: car['price_per_day'], price_per_km: car['price_per_km'])
-    end
-
-    @rentals = data['rentals'].map do |rental|
-      Rental.new(id: rental['id'], car_id: rental['car_id'], start_date: rental['start_date'],
-                 end_date: rental['end_date'], distance: rental['distance'])
-    end
-
-    @results = []
+    @cars = init_cars(data)
+    @rentals = init_rentals(data)
   end
 
   def compute
-    @results = @rentals.map do |rental|
+    @rentals.each do |rental|
       begin
         car = find_car(rental.car_id)
       rescue ArgumentError => e
         puts "Rental #{rental.id} skipped: #{e}"
       end
 
-      {
-        id: rental.id,
-        price: price(rental, car)
-      }
+      rental.price = compute_rental_price(rental, car)
     end
   end
 
   def serialize
     {
-      rentals: @results
-    }.to_json
+      rentals: @rentals.map(&:serialize)
+    }
   end
 
   private
 
-  def find_car(car_id)
-    car = @cars.find { |car| car.id == car_id }
-    raise ArgumentError.new, "Could not find car for car_id #{car_id}" unless car
-
-    car
+  def init_cars(data)
+    data['cars'].map do |car|
+      Car.new(id: car['id'], price_per_day: car['price_per_day'], price_per_km: car['price_per_km'])
+    end
   end
 
-  def price(rental, car)
+  def init_rentals(data)
+    data['rentals'].map do |rental|
+      Rental.new(id: rental['id'], car_id: rental['car_id'], start_date: rental['start_date'],
+                 end_date: rental['end_date'], distance: rental['distance'])
+    end
+  end
+
+  def find_car(car_id)
+    res = @cars.find { |car| car.id == car_id }
+    raise ArgumentError.new, "Could not find car for car_id #{car_id}" unless res
+
+    res
+  end
+
+  def compute_rental_price(rental, car)
     duration_price(rental, car) + distance_price(rental, car)
   end
 
   def duration_price(rental, car)
     (1..rental.duration).inject(0) do |price, day|
-      price + price_per_day_with_discount(car.price_per_day, day).to_i
+      price + car.price_per_day_with_discount(day)
     end
-  end
-
-  def price_per_day_with_discount(price_per_day, day)
-    return price_per_day - 50.percent_of(price_per_day) if day > 10
-    return price_per_day - 30.percent_of(price_per_day) if day > 4
-    return price_per_day - 10.percent_of(price_per_day) if day > 1
-
-    price_per_day
   end
 
   def distance_price(rental, car)
